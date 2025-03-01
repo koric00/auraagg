@@ -1,0 +1,47 @@
+[package]
+name = "router-engine"
+version = "0.1.0"
+edition = "2021"
+description = "Core routing engine for AuraAgg DEX aggregator"
+authors = ["AuraAgg Team"]
+
+[dependencies]
+tokio = { version = "1.28.2", features = ["full"] }
+serde = { version = "1.0.163", features = ["derive"] }
+serde_json = "1.0.96"
+ethers = { version = "2.0.4", features = ["ws", "rustls"] }
+solana-client = "1.16.0"
+solana-sdk = "1.16.0"
+redis = { version = "0.23.0", features = ["tokio-comp"] }
+async-trait = "0.1.68"
+thiserror = "1.0.40"
+tracing = "0.1.37"
+tracing-subscriber = "0.3.17"
+reqwest = { version = "0.11.18", features = ["json"] }
+futures = "0.3.28"
+dashmap = "5.4.0"
+num-bigint = "0.4.3"
+num-traits = "0.2.15"
+hex = "0.4.3"
+sha2 = "0.10.6"
+rand = "0.8.5"
+rand_chacha = "0.3.1"
+wasm-bindgen = "0.2.87"
+web-sys = { version = "0.3.64", features = ["console"] }
+js-sys = "0.3.64"
+pyo3 = { version = "0.19.0", features = ["extension-module"] }
+
+[lib]
+name = "router_engine"
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[features]
+default = ["evm", "solana"]
+evm = []
+solana = []
+wasm = ["wasm-bindgen", "web-sys", "js-sys"] 

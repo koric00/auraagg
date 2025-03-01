@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # Redis for real-time event streaming
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  # Local EVM node for development
+  ganache:
+    image: trufflesuite/ganache:latest
+    ports:
+      - "8545:8545"
+    command: --deterministic --mnemonic "test test test test test test test test test test test junk" --chain.chainId 1337 --blockTime 2
+    restart: unless-stopped
+
+  # Local Solana node for development
+  solana-test-validator:
+    image: solanalabs/solana:stable
+    ports:
+      - "8899:8899"
+      - "8900:8900"
+    command: solana-test-validator --no-bpf-jit --reset
+    restart: unless-stopped
+
+  # Graph node for indexing
+  graph-node:
+    image: graphprotocol/graph-node:latest
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8020:8020"
+      - "8030:8030"
+      - "8040:8040"
+    depends_on:
+      - ipfs
+      - postgres
+      - ganache
+    environment:
+      postgres_host: postgres
+      postgres_user: graph-node
+      postgres_pass: let-me-in
+      postgres_db: graph-node
+      ipfs: 'ipfs:5001'
+      ethereum: 'mainnet:http://ganache:8545'
+      RUST_LOG: info
+    restart: unless-stopped
+
+  # IPFS node for Graph Node
+  ipfs:
+    image: ipfs/go-ipfs:v0.18.0
+    ports:
+      - "5001:5001"
+    volumes:
+      - ipfs-data:/data/ipfs
+    restart: unless-stopped
+
+  # PostgreSQL for Graph Node
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - "5432:5432"
+    command: ["postgres", "-cshared_preload_libraries=pg_stat_statements"]
+    environment:
+      POSTGRES_USER: graph-node
+      POSTGRES_PASSWORD: let-me-in
+      POSTGRES_DB: graph-node
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # API service
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - ganache
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+      - EVM_RPC_URL=http://ganache:8545
+      - SOLANA_RPC_URL=http://solana-test-validator:8899
+    volumes:
+      - ./api:/app
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  ipfs-data:
+  postgres-data: 
