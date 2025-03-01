@@ -1,4 +1,4 @@
-我自己练手的web3交易聚合器。
+练手的web3交易聚合器。
 # AuraAgg - Advanced Cross-Chain Aggregation Router
 
 A high-performance, cross-chain DEX aggregator with MEV protection and optimized routing.
